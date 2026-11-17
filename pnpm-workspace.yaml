@@ -1,0 +1,12 @@
+allowBuilds:
+  esbuild: true
+  lightningcss: true
+  sharp: true
+  workerd: true
+minimumReleaseAgeExclude:
+  - '@tanstack/query-core@5.107.2'
+  - '@tanstack/query-devtools@5.107.2'
+  - '@tanstack/react-query-devtools@5.107.2'
+  - '@tanstack/react-query@5.107.2'
+packages:
+  - .
