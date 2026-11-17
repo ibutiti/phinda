@@ -1,4 +1,7 @@
-Welcome to your new TanStack Start app!
+# Phinda
+
+Phinda is a student learning app built with TanStack Start and deployed on Cloudflare Workers.
+Students can create an email account, sign in, and browse Grade 7 South African CAPS Mathematics.
 
 # Getting Started
 
@@ -73,24 +76,25 @@ An answer is correct when it matches an accepted answer after whitespace and cas
 Create a D1 database with `pnpm exec wrangler d1 create phinda`, then set the returned database ID in `wrangler.jsonc`. Apply migrations locally with `pnpm exec wrangler d1 migrations apply phinda --local`; use `--remote` for the deployed database.
 
 
-## Setting up Clerk
+## Setting up student sign-in
 
-1. Create an application in the [Clerk dashboard](https://dashboard.clerk.com).
-2. Copy its publishable and secret keys into `.env.local`:
+1. Create an application in the [Clerk dashboard](https://dashboard.clerk.com) and enable email sign-up.
+2. Set its publishable and secret keys in `.env.local` for local development:
 
    ```bash
    VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
    CLERK_SECRET_KEY=sk_test_...
    ```
 
-3. Start the app and visit `/demo/clerk`.
+3. Start the app with `pnpm dev`. The home page provides sign-up and sign-in; the Grade 7 subject route requires a signed-in student.
 
 ### What's wired up
 
 - `clerkMiddleware()` authenticates each server request from `src/start.ts`.
 - `<ClerkProvider>` supplies auth state throughout the app.
-- `<SignInButton>` and `<UserButton>` in the header respond to the session.
-- `/demo/clerk` shows Clerk's prebuilt sign-in UI and signed-in user data.
+- Email account creation and sign-in use Clerk's hosted modal UI.
+- The subject route checks the Clerk session on the server before returning curriculum content.
+- Student account details stay with Clerk. The app does not expose one student's account or activity to another.
 
 ### Protecting a route
 
@@ -118,11 +122,12 @@ export const Route = createFileRoute('/dashboard')({
 `<Show when="signed-in">` remains useful for presentation, but server-side checks
 are the security boundary. See Clerk's [TanStack Start docs](https://clerk.com/docs/tanstack-react-start/getting-started/quickstart).
 
-### Production checklist
+### Cloudflare Workers
 
-- Set both keys in the production environment; never expose `CLERK_SECRET_KEY`.
+- Set `VITE_CLERK_PUBLISHABLE_KEY` in the production build environment. Vite embeds this public key in the client bundle.
+- Set the runtime secret with `pnpm exec wrangler secret put CLERK_SECRET_KEY`.
 - Use production keys from a dedicated production Clerk instance.
-- Configure the production domain and any social connections in the Clerk dashboard.
+- Configure the production domain and email sign-up in the Clerk dashboard.
 
 
 ## Shadcn
