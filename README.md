@@ -54,6 +54,24 @@ For production env vars, run `wrangler secret put MY_VAR` for each secret listed
 
 KV, D1, R2, and Durable Object bindings are configured in `wrangler.jsonc` — see https://developers.cloudflare.com/workers/wrangler/configuration/.
 
+### Answer checking and progress history
+
+Answer submission and progress history use authenticated server functions. `submitStudentAnswer` accepts `{ questionId, answer }` and returns the correctness result; incorrect answers also include the stored correct answer and explanation. `getStudentProgress` returns per-subject totals and the student's latest 100 attempts. Attempts use the authenticated Clerk user ID; clients cannot choose another student ID.
+
+The D1 database stores questions and answer attempts. Short-text answer keys use this JSON shape:
+
+```json
+{
+  "type": "short_text",
+  "acceptedAnswers": ["right angle"],
+  "requiredTerms": ["90 degrees", "angle"]
+}
+```
+
+An answer is correct when it matches an accepted answer after whitespace and case normalization, or includes every required rubric term. Multiple-choice keys use `{ "type": "multiple_choice", "correctAnswer": "B" }`.
+
+Create a D1 database with `pnpm exec wrangler d1 create phinda`, then set the returned database ID in `wrangler.jsonc`. Apply migrations locally with `pnpm exec wrangler d1 migrations apply phinda --local`; use `--remote` for the deployed database.
+
 
 ## Setting up Clerk
 
