@@ -9,6 +9,12 @@ pnpm install
 pnpm dev
 ```
 
+# Token optimisation
+
+- We cut token use with the [Caveman skill](https://github.com/JuliusBrussee/caveman/blob/main/skills/caveman/SKILL.md), which strips greetings, hedging and recaps while preserving technical content.
+- One orchestrator holds project context; sub-agents get only task-specific context, and work is split into self-contained GitHub issues to avoid loading unrelated code and history.
+- I read your request as splitting all work into issues; tell me if that is wrong. The Caveman repo claims 65% savings, but `SKILL.md` gives no benchmark; measured Phinda savings would be stronger.
+
 # Building For Production
 
 To build this application for production:
