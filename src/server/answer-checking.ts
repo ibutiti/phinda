@@ -42,10 +42,14 @@ export interface SubjectProgress {
 	subject: string;
 	attempts: number;
 	correct: number;
-	lastAttemptAt: string;
+	lastAttemptAt: string | null;
+	questionsAttempted: number;
+	questionCount: number;
+	completionPercentage: number;
 }
 
 export interface AnswerHistoryEntry {
+	id: number;
 	questionId: string;
 	subject: string;
 	prompt: string;

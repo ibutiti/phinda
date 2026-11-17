@@ -129,6 +129,9 @@ test("returns subject progress and a bounded review history", async () => {
 					attempts: 3,
 					correct: 2,
 					lastAttemptAt: "2026-11-17T12:00:00.000Z",
+					questionsAttempted: 2,
+					questionCount: 5,
+					completionPercentage: 40,
 				},
 			];
 		},

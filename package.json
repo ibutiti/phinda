@@ -10,7 +10,7 @@
 		"generate-routes": "vite build",
 		"build": "vite build",
 		"preview": "pnpm run build && vite preview",
-		"test": "node --test src/server/answer-checking.test.ts",
+		"test": "node --test src/server/answer-checking.test.ts src/lib/caps-question-bank.test.ts",
 		"format": "biome format",
 		"lint": "biome lint",
 		"check": "biome check",

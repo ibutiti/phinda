@@ -10,33 +10,54 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StudyRouteImport } from './routes/study'
+import { Route as SubjectsGrade7MathematicsRouteImport } from './routes/subjects.grade-7-mathematics'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudyRoute = StudyRouteImport.update({
+  id: '/study',
+  path: '/study',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubjectsGrade7MathematicsRoute =
+  SubjectsGrade7MathematicsRouteImport.update({
+    id: '/subjects/grade-7-mathematics',
+    path: '/subjects/grade-7-mathematics',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/study': typeof StudyRoute
+  '/subjects/grade-7-mathematics': typeof SubjectsGrade7MathematicsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/study': typeof StudyRoute
+  '/subjects/grade-7-mathematics': typeof SubjectsGrade7MathematicsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/study': typeof StudyRoute
+  '/subjects/grade-7-mathematics': typeof SubjectsGrade7MathematicsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/study' | '/subjects/grade-7-mathematics'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/study' | '/subjects/grade-7-mathematics'
+  id: '__root__' | '/' | '/study' | '/subjects/grade-7-mathematics'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  StudyRoute: typeof StudyRoute
+  SubjectsGrade7MathematicsRoute: typeof SubjectsGrade7MathematicsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +69,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/study': {
+      id: '/study'
+      path: '/study'
+      fullPath: '/study'
+      preLoaderRoute: typeof StudyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subjects/grade-7-mathematics': {
+      id: '/subjects/grade-7-mathematics'
+      path: '/subjects/grade-7-mathematics'
+      fullPath: '/subjects/grade-7-mathematics'
+      preLoaderRoute: typeof SubjectsGrade7MathematicsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  StudyRoute: StudyRoute,
+  SubjectsGrade7MathematicsRoute: SubjectsGrade7MathematicsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

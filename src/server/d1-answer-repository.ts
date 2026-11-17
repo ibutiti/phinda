@@ -44,12 +44,16 @@ export function createD1AnswerRepository(db: D1Database): AnswerRepository {
 				.prepare(
 					`SELECT
             q.subject,
-            COUNT(*) AS attempts,
-            SUM(a.is_correct) AS correct,
-            MAX(a.created_at) AS last_attempt_at
-          FROM answer_attempts a
-          JOIN questions q ON q.id = a.question_id
-          WHERE a.student_id = ?
+            COUNT(a.id) AS attempts,
+            COALESCE(SUM(a.is_correct), 0) AS correct,
+            MAX(a.created_at) AS last_attempt_at,
+            COUNT(DISTINCT CASE WHEN a.id IS NOT NULL THEN q.id END) AS questions_attempted,
+            COUNT(DISTINCT q.id) AS question_count
+          FROM questions q
+          LEFT JOIN answer_attempts a
+            ON a.question_id = q.id
+            AND a.student_id = ?
+          WHERE q.status = 'accepted'
           GROUP BY q.subject
           ORDER BY q.subject`,
 				)
@@ -58,23 +62,34 @@ export function createD1AnswerRepository(db: D1Database): AnswerRepository {
 					subject: string;
 					attempts: number;
 					correct: number;
-					last_attempt_at: string;
+					last_attempt_at: string | null;
+					questions_attempted: number;
+					question_count: number;
 				}>();
 
-			return result.results.map(
-				(row): SubjectProgress => ({
+			return result.results.map((row): SubjectProgress => {
+				const questionCount = row.question_count;
+				const questionsAttempted = row.questions_attempted;
+				return {
 					subject: row.subject,
 					attempts: row.attempts,
 					correct: row.correct,
 					lastAttemptAt: row.last_attempt_at,
-				}),
-			);
+					questionsAttempted,
+					questionCount,
+					completionPercentage:
+						questionCount === 0
+							? 0
+							: Math.round((questionsAttempted / questionCount) * 1000) / 10,
+				};
+			});
 		},
 
 		async getHistory(studentId, limit) {
 			const result = await db
 				.prepare(
 					`SELECT
+            a.id AS attempt_id,
             q.id AS question_id,
             q.subject,
             q.prompt,
@@ -91,6 +106,7 @@ export function createD1AnswerRepository(db: D1Database): AnswerRepository {
 				)
 				.bind(studentId, limit)
 				.all<{
+					attempt_id: number;
 					question_id: string;
 					subject: string;
 					prompt: string;
@@ -103,6 +119,7 @@ export function createD1AnswerRepository(db: D1Database): AnswerRepository {
 
 			return result.results.map(
 				(row): AnswerHistoryEntry => ({
+					id: row.attempt_id,
 					questionId: row.question_id,
 					subject: row.subject,
 					prompt: row.prompt,
