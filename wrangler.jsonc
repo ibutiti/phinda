@@ -24,6 +24,9 @@
 	"observability": {
 		"enabled": true
 	},
+	"vars": {
+		"VITE_CLERK_PUBLISHABLE_KEY": "pk_test_cHJvdWQtY29yYWwtNDQ1Ni5jbGVyay5hY2NvdW50cy5kZXYk"
+	},
 	"upload_source_maps": true
 	/**
 	 * Smart Placement
