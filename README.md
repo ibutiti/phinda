@@ -1,64 +1,76 @@
-Welcome to your new TanStack Start app!
+# Phinda
 
-# Getting Started
+Phinda is a CAPS-aligned mathematics learning app built for African classrooms. Students practise grade-appropriate maths, receive feedback, and track their progress.
 
-To run this application:
+## What it does
+
+- Serves published Grade 7 CAPS Mathematics questions.
+- Generates and separately verifies questions against approved source text when no published question matches the requested answer type.
+- Grades multiple-choice and short-text answers on the server.
+- Tracks student progress and recent attempts.
+- Requires sign-in for study and curriculum routes.
+
+The question bank currently uses an app-maintained curriculum summary and links to the Department of Basic Education's CAPS policy page. It does not fetch or verify against a Grade 7 Mathematics source document. Review `DEFAULT_APPROVED_CAPS_SOURCES` before relying on generated questions as authoritative curriculum content.
+
+Students in under-resourced classrooms can lack reliable curriculum-aligned practice and timely feedback. Phinda aims to make structured practice, clear explanations, and progress visibility easier to access.
+
+## Stack
+
+- TanStack Start and TanStack Router
+- Cloudflare Workers and D1
+- Workers AI for question generation and verification
+- Clerk for authentication
+
+## Run locally
+
+### 1. Install dependencies
 
 ```bash
 pnpm install
+```
+
+### 2. Configure Clerk
+
+Copy `.env.example` to `.env.local`, then set the Clerk keys:
+
+```bash
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+```
+
+Create an application in the [Clerk dashboard](https://dashboard.clerk.com). Never expose `CLERK_SECRET_KEY`.
+
+### 3. Configure D1
+
+Create a database:
+
+```bash
+pnpm exec wrangler d1 create phinda
+```
+
+Set the returned database ID in `wrangler.jsonc`. Apply migrations locally:
+
+```bash
+pnpm exec wrangler d1 migrations apply phinda --local
+```
+
+Use `--remote` to apply migrations to the deployed database. Migration `0002_question_bank_metadata.sql` adds question provenance and publication fields.
+
+### 4. Start the app
+
+```bash
 pnpm dev
 ```
 
-# Building For Production
+Open `http://localhost:3000`. `/study` and `/subjects/grade-7-mathematics` require a signed-in student.
 
-To build this application for production:
+Workers AI uses the `AI` binding in `wrangler.jsonc`. Local AI requests may use remote Cloudflare resources and incur charges.
 
-```bash
-pnpm build
-```
+## Data and answer checking
 
-## Styling
+Answer submission uses the authenticated Clerk user ID; clients cannot choose another student ID. Incorrect answers return the stored correct answer and explanation. Progress counts unique published questions for completion, and includes all correct attempts.
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
-
-## Linting & Formatting
-
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
-
-
-```bash
-pnpm lint
-pnpm format
-pnpm check
-```
-
-
-## Deploy to Cloudflare Workers
-
-This project uses the Cloudflare Vite plugin (configured in `vite.config.ts`) and `wrangler.jsonc`:
-
-1. Install Wrangler: `npm install -g wrangler`
-2. Authenticate: `wrangler login`
-3. Deploy: `npx wrangler deploy`
-
-For production env vars, run `wrangler secret put MY_VAR` for each secret listed in `.env.example`. Public (non-secret) vars go in `wrangler.jsonc` under `vars`.
-
-KV, D1, R2, and Durable Object bindings are configured in `wrangler.jsonc` — see https://developers.cloudflare.com/workers/wrangler/configuration/.
-
-### Answer checking and progress history
-
-Answer submission and progress history use authenticated server functions. `submitStudentAnswer` accepts `{ questionId, answer }` and returns the correctness result; incorrect answers also include the stored correct answer and explanation. `getStudentProgress` returns per-subject totals and the student's latest 100 attempts. Attempts use the authenticated Clerk user ID; clients cannot choose another student ID.
-
-The D1 database stores questions and answer attempts. Short-text answer keys use this JSON shape:
+Short-text answer keys use this JSON shape:
 
 ```json
 {
@@ -70,217 +82,14 @@ The D1 database stores questions and answer attempts. Short-text answer keys use
 
 An answer is correct when it matches an accepted answer after whitespace and case normalization, or includes every required rubric term. Multiple-choice keys use `{ "type": "multiple_choice", "correctAnswer": "B" }`.
 
-Create a D1 database with `pnpm exec wrangler d1 create phinda`, then set the returned database ID in `wrangler.jsonc`. Apply migrations locally with `pnpm exec wrangler d1 migrations apply phinda --local`; use `--remote` for the deployed database.
-
-
-## Setting up Clerk
-
-1. Create an application in the [Clerk dashboard](https://dashboard.clerk.com).
-2. Copy its publishable and secret keys into `.env.local`:
-
-   ```bash
-   VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
-   CLERK_SECRET_KEY=sk_test_...
-   ```
-
-3. Start the app and visit `/demo/clerk`.
-
-### What's wired up
-
-- `clerkMiddleware()` authenticates each server request from `src/start.ts`.
-- `<ClerkProvider>` supplies auth state throughout the app.
-- `<SignInButton>` and `<UserButton>` in the header respond to the session.
-- `/demo/clerk` shows Clerk's prebuilt sign-in UI and signed-in user data.
-
-### Protecting a route
-
-Use `auth()` in a loader or server function when authorization must happen on the
-server:
-
-```tsx
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
-import { auth } from '@clerk/tanstack-react-start/server'
-
-const getAuth = createServerFn({ method: 'GET' }).handler(async () => {
-  const { userId } = await auth()
-  return { userId }
-})
-
-export const Route = createFileRoute('/dashboard')({
-  beforeLoad: async () => {
-    const { userId } = await getAuth()
-    if (!userId) throw redirect({ to: '/' })
-  },
-})
-```
-
-`<Show when="signed-in">` remains useful for presentation, but server-side checks
-are the security boundary. See Clerk's [TanStack Start docs](https://clerk.com/docs/tanstack-react-start/getting-started/quickstart).
-
-### Production checklist
-
-- Set both keys in the production environment; never expose `CLERK_SECRET_KEY`.
-- Use production keys from a dedicated production Clerk instance.
-- Configure the production domain and any social connections in the Clerk dashboard.
-
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+## Development checks
 
 ```bash
-pnpm dlx shadcn@latest add button
+pnpm test
+pnpm exec tsc --noEmit
+pnpm lint
 ```
 
+`pnpm build` creates the production build. `pnpm deploy` builds and deploys to Cloudflare Workers; run `pnpm exec wrangler login` first.
 
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+For production, configure production Clerk keys and domain, set a real D1 database ID in `wrangler.jsonc`, apply migrations remotely, and verify Workers AI is enabled for the account.
