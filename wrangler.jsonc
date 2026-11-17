@@ -14,7 +14,7 @@
 		{
 			"binding": "DB",
 			"database_name": "phinda",
-			"database_id": "00000000-0000-0000-0000-000000000000",
+			"database_id": "5d6daabd-d037-4de0-81c5-f995d4eea041",
 			"migrations_dir": "migrations"
 		}
 	],
