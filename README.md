@@ -10,7 +10,8 @@ Phinda is a CAPS-aligned mathematics learning app built for African classrooms. 
 - Tracks student progress and recent attempts.
 - Requires sign-in for study and curriculum routes.
 
-The question bank currently uses an app-maintained curriculum summary and links to the Department of Basic Education's CAPS policy page. It does not fetch or verify against a Grade 7 Mathematics source document. Review `DEFAULT_APPROVED_CAPS_SOURCES` before relying on generated questions as authoritative curriculum content.
+The default question source is an excerpt from the Department of Basic Education's [Grade 7-9 Mathematics CAPS policy](https://www.education.gov.za/LinkClick.aspx?fileticket=uCNqOwfGbmc%3d&tabid=573&portalid=0&mid=1629&forcedownload=true#page=68), Grade 7 Term 4, Topic 1.3, page 68. The app supplies that excerpt and its exact supporting quotes to both AI checks. Migration `0003_unpublish_unverified_questions.sql` unpublishes older rows without current approved-source evidence.
+AI question generation currently covers Grade 7 integer addition and subtraction only.
 
 Students in under-resourced classrooms can lack reliable curriculum-aligned practice and timely feedback. Phinda aims to make structured practice, clear explanations, and progress visibility easier to access.
 
@@ -54,7 +55,7 @@ Set the returned database ID in `wrangler.jsonc`. Apply migrations locally:
 pnpm exec wrangler d1 migrations apply phinda --local
 ```
 
-Use `--remote` to apply migrations to the deployed database. Migration `0002_question_bank_metadata.sql` adds question provenance and publication fields.
+Use `--remote` to apply migrations to the deployed database. Migration `0002_question_bank_metadata.sql` adds question provenance and publication fields. Migration `0003_unpublish_unverified_questions.sql` unpublishes rows without current approved-source evidence.
 
 ### 4. Start the app
 

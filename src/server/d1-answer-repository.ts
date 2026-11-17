@@ -13,7 +13,11 @@ export function createD1AnswerRepository(db: D1Database): AnswerRepository {
 				.prepare(
 					`SELECT id, type, answer_key, correct_answer, explanation
           FROM questions
-          WHERE id = ?`,
+          WHERE id = ?
+            AND status = 'accepted'
+            AND source_ref IS NOT NULL AND TRIM(source_ref) != ''
+            AND source_title IS NOT NULL AND TRIM(source_title) != ''
+            AND generated_from IS NOT NULL AND TRIM(generated_from) != ''`,
 				)
 				.bind(questionId)
 				.first<StoredQuestion>();
@@ -54,6 +58,9 @@ export function createD1AnswerRepository(db: D1Database): AnswerRepository {
             ON a.question_id = q.id
             AND a.student_id = ?
           WHERE q.status = 'accepted'
+            AND q.source_ref IS NOT NULL AND TRIM(q.source_ref) != ''
+            AND q.source_title IS NOT NULL AND TRIM(q.source_title) != ''
+            AND q.generated_from IS NOT NULL AND TRIM(q.generated_from) != ''
           GROUP BY q.subject
           ORDER BY q.subject`,
 				)
