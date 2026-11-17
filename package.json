@@ -10,6 +10,7 @@
 		"generate-routes": "vite build",
 		"build": "vite build",
 		"preview": "pnpm run build && vite preview",
+		"test": "node --test src/server/answer-checking.test.ts",
 		"format": "biome format",
 		"lint": "biome lint",
 		"check": "biome check",
